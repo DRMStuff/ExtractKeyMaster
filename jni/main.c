@@ -66,6 +66,7 @@ int main() {
 	int fd = open("shellcode.bin", O_RDONLY);
 	if (fd < 0) {
 		perror("[-] Failed to open shellcode binary, aborting.\n");
+		printf("fd: %d\n", fd);
 		return -ENOENT;
 	}
 	struct stat st;
